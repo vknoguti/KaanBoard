@@ -1,5 +1,5 @@
 using KaanBoard.Data;
-using KaanBoard.Models.entities;
+using KaanBoard.Models.Entities.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.ApplicationParts;
 using Microsoft.EntityFrameworkCore;
@@ -22,7 +22,7 @@ if (builder.Environment.IsDevelopment())
         throw new InvalidOperationException("Connection string 'Default Connection' not found.");
 }
 
-builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
+builder.Services.AddIdentity<ApplicationUser, ApplicationRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
 
