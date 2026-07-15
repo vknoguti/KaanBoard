@@ -32,5 +32,9 @@ namespace KaanBoard.Models.Entities.Identity
         public bool? FlAtivo { get; set; }
 
         public ICollection<UserBoard> UserBoards = new HashSet<UserBoard>();
+
+        public ICollection<TaskItemUserHistory> TaskItemHistory = new HashSet<TaskItemUserHistory>();
+
+        public ICollection<Comment> Comments = new HashSet<Comment>();
     }
 }

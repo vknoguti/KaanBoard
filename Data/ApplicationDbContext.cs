@@ -1,4 +1,5 @@
-﻿using KaanBoard.Models.entities;
+﻿using KaanBoard.Models;
+using KaanBoard.Models.entities;
 using KaanBoard.Models.Entities;
 using KaanBoard.Models.Entities.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -116,6 +117,73 @@ namespace KaanBoard.Data
                 .HasOne(ti => ti.Column)
                 .WithMany(c => c.TaskItem)
                 .HasForeignKey(ti => ti.IdColumn);
+            #endregion
+
+            #region TaskItemUserHistory
+            builder.Entity<TaskItemUserHistory>()
+                .HasKey(th => new { th.Iduser, th.IdTaskItem });
+
+            //POSTGRESQL
+            //builder.Entity<TaskItemUserHistory>()
+            //    .Property(th => th.ActionDate)
+            //    .HasDefaultValueSql("NOW()");
+
+            builder.Entity<TaskItemUserHistory>()
+                .Property(th => th.ActionDate)
+                .HasDefaultValueSql("GETDATE()");
+
+            builder.Entity<TaskItemUserHistory>()
+                .HasOne(th => th.User)
+                .WithMany(u => u.TaskItemHistory)
+                .HasForeignKey(th => th.Iduser);
+
+            builder.Entity<TaskItemUserHistory>()
+             .HasOne(th => th.TaskItem)
+             .WithMany(u => u.TaskItemHistory)
+             .HasForeignKey(th => th.IdTaskItem);
+            #endregion
+
+            #region Comment
+            builder.Entity<Comment>()
+                .HasKey(c => c.IdComment);
+
+            //POSTGRESQL
+            //builder.Entity<Comment>()
+            //    .Property(c => c.DtCreation)
+            //    .HasDefaultValueSql("NOW()");
+
+            builder.Entity<Comment>()
+                .Property(c => c.DtCreation)
+                .HasDefaultValueSql("GETDATE()");
+
+            builder.Entity<Comment>()
+                .Property(c => c.IsDeleted)
+                .HasDefaultValue(false);
+
+            builder.Entity<Comment>()
+                .HasOne(c => c.User)
+                .WithMany(u => u.Comments)
+                .HasForeignKey(c => c.IdUser);
+
+            builder.Entity<Comment>()
+                .HasOne(c => c.TaskItem)
+                .WithMany(u => u.Comments)
+                .HasForeignKey(c => c.IdTaskItem);
+            #endregion
+
+            #region CommentHistory
+            builder.Entity<CommentHistory>()
+                .HasKey(ch => ch.IdCommentHistory);
+
+            //DEIXAR ESSE QUANDO FOR USAR O POSTGRESQL
+            //builder.Entity<CommentHistory>()
+            //    .Property(ch => ch.IdCommentHistory)
+            //    .HasDefaultValueSql("uuidv7()");
+
+            builder.Entity<CommentHistory>()
+                .Property(ch => ch.IdCommentHistory)
+                .HasDefaultValueSql("NEWID()");
+
             #endregion
         }
     }

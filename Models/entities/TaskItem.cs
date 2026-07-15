@@ -40,5 +40,9 @@ namespace KaanBoard.Models.Entities
         public DateTimeOffset? UpdatedAt { get; set; }
 
         public Column Column { get; set; } = null!;
+
+        public ICollection<TaskItemUserHistory> TaskItemHistory = new HashSet<TaskItemUserHistory>();
+
+        public ICollection<Comment> Comments = new HashSet<Comment>(); 
     }
 }
