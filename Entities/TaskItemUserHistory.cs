@@ -1,22 +1,23 @@
-﻿using KaanBoard.Models.Entities;
-using KaanBoard.Models.Entities.Identity;
+﻿using KaanBoard.Entities.Identity;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
-namespace KaanBoard.Models
+namespace KaanBoard.Entities
 {
-    [Table("task_item_user_history")]
     public class TaskItemUserHistory
     {
-        [Column("id_user")]
         public Guid Iduser { get; set; }
-        [Column("id_task_item")]
+    
         public Guid IdTaskItem { get; set; }
-        [Column("dt_action_date")]
+     
         public DateTimeOffset? ActionDate { get; set; }
-        [Column("tx_action")]
+    
         public string? TxAction { get; set; }
 
-        public ApplicationUser User { get; set; } = null!;
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public ApplicationUser<Guid> User { get; set; } = null!;
+
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public TaskItem TaskItem { get; set; } = null!;
     }
 }
