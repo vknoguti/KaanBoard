@@ -1,7 +1,6 @@
 using KaanBoard.Data;
-using KaanBoard.Entities.Identity;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
+using KaanBoard.Extensions;
+using KaanBoard.Services;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -16,20 +15,12 @@ builder.Services.AddControllers().AddJsonOptions(options =>
 
 builder.Services.AddSwaggerGen();
 
-//MUDAR CONNECTION STRING TRUE DATABASE
-var connectionString = string.Empty;
-if (builder.Environment.IsDevelopment())
-{
-    connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ??
-        throw new InvalidOperationException("Connection string 'Default Connection' not found.");
-}
+builder.Services
+    .ConfigureSqlContext(builder.Configuration, builder.Environment)
+    .ConfigureIdentity()
+    .ConfigureJWT(builder.Configuration);
 
-builder.Services.AddIdentity<ApplicationUser<Guid>, ApplicationRole<Guid>>()
-    .AddEntityFrameworkStores<ApplicationDbContext>()
-    .AddDefaultTokenProviders();
-
-builder.Services.AddDbContext<ApplicationDbContext>(options => 
-    options.UseSqlServer(connectionString));
+builder.Services.AddScoped<ITokenService, TokenService>();
 
 var app = builder.Build();
 

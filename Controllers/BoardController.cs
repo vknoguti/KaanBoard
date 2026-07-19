@@ -1,5 +1,4 @@
 ﻿using KaanBoard.Data;
-using KaanBoard.Models.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
