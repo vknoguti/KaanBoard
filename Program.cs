@@ -1,6 +1,7 @@
 using KaanBoard.Data;
 using KaanBoard.Extensions;
 using KaanBoard.Services;
+using Microsoft.AspNetCore.Identity;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -17,10 +18,12 @@ builder.Services.AddSwaggerGen();
 
 builder.Services
     .ConfigureSqlContext(builder.Configuration, builder.Environment)
-    .ConfigureIdentity()
+    //.ConfigureIdentity()
     .ConfigureJWT(builder.Configuration);
 
 builder.Services.AddScoped<ITokenService, TokenService>();
+
+builder.Services.AddScoped(typeof(IPasswordHasher<>), typeof(PasswordHasher<>));
 
 var app = builder.Build();
 
@@ -38,6 +41,6 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-await DataSeeder.SeedAsync(app.Services);
+await DatabaseSeeder.SeedAsync(app.Services);
 
 app.Run();

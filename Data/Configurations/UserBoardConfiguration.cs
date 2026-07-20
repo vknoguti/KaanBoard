@@ -1,4 +1,5 @@
 ﻿using KaanBoard.Entities;
+using KaanBoard.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -9,6 +10,7 @@ namespace KaanBoard.Data.Configurations
         public void Configure(EntityTypeBuilder<UserBoard> builder)
         {
             builder.HasKey(t => new { t.IdUser, t.IdBoard });
+            builder.Property(t => t.UserRole).HasDefaultValue(BoardRole.Viewer);
 
             builder.HasOne(ub => ub.User)
                 .WithMany(u => u.UserBoards)

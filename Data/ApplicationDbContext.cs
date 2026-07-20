@@ -1,17 +1,14 @@
 ﻿using KaanBoard.Data.Configurations;
 using KaanBoard.Entities;
-using KaanBoard.Entities.Identity;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace KaanBoard.Data
 {
-    public class ApplicationDbContext : IdentityDbContext<ApplicationUser<Guid>, ApplicationRole<Guid>, Guid> 
+    public class ApplicationDbContext : DbContext
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
 
-        public DbSet<ApplicationRole<Guid>> AspNetRoles { get; set; }
-        public DbSet<ApplicationUser<Guid>> AspNetUsers { get; set; }
+        public DbSet<User<Guid>> Users { get; set; }
         public DbSet<Board> Boards { get; set;  }
         public DbSet<Column> Columns { get; set; }
         public DbSet<Comment> Comments { get; set; }

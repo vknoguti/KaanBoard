@@ -16,10 +16,10 @@ namespace KaanBoard.Services
         {
             _config = config;
             _secretKey = config["JWT:SecretKey"] ?? throw new InvalidOperationException("Invalid Secret Key");
-            _accessTokenExpiryMinutes = _config.GetValue<int>("JWT:AccessTokenExpiryMinutes", 60); 
+            _accessTokenExpiryMinutes = _config.GetSection("JWT").GetValue<int>("AccessTokenExpiryMinutes", 60); 
         }
 
-        public JwtSecurityToken GenerateAccessToken(UserJwtModelDTO userJWT)
+        public JwtSecurityToken GenerateAccessToken( UserJwtModelDTO userJWT)
         {
             var claims = new[]
             { 

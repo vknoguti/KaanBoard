@@ -1,5 +1,4 @@
-﻿using KaanBoard.Entities.Identity;
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 
 namespace KaanBoard.Entities
@@ -35,7 +34,7 @@ namespace KaanBoard.Entities
         public bool IsDeleted { get; set; }
 
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public ApplicationUser<Guid> User { get; set; } = null!;
+        public User<Guid> User { get; set; } = null!;
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public TaskItem TaskItem { get; set; } = null!;
 

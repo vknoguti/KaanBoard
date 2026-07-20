@@ -1,20 +1,17 @@
-﻿using KaanBoard.Entities;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Reflection.Metadata;
 using System.Text.Json.Serialization;
 
-namespace KaanBoard.Entities.Identity
+namespace KaanBoard.Entities
 {
-    
-    public class ApplicationUser<TKey> : IdentityUser<TKey> where TKey : IEquatable<TKey>
+    public class User<TKey> where TKey : IEquatable<TKey>
     {
-        public override TKey Id { get; set; } = default!;
+        public TKey Id { get; set; } = default!;
 
         [Required]
         [Column(TypeName = "nvarchar(30)")]
-        public override string? UserName { get; set; } = null!;
+        public string UserName { get; set; } = null!;
 
         [Column(TypeName = "nvarchar(200)")]
         [Required]
@@ -22,13 +19,14 @@ namespace KaanBoard.Entities.Identity
 
         [Column(TypeName = "nvarchar(60)")]
         [Required]
-        public override string? Email { get => base.Email!; set => base.Email = value; }
+        public string Email { get; set; } = null!;
 
-        [Column(TypeName = "varchar(255)")]
-        public override string? PasswordHash { get => base.PasswordHash; set => base.PasswordHash = value; }
+        [Required]
+        [Column(TypeName = "nvarchar(max)")]
+        public string PasswordHash { get; set; } = null!;
 
         [Column(TypeName = "nvarchar(50)")]
-        public override string? PhoneNumber { get => base.PhoneNumber; set => base.PhoneNumber = value; }
+        public string? PhoneNumber { get; set; }
 
         [Required]
         [Column(TypeName = "datetimeoffset(7)")]

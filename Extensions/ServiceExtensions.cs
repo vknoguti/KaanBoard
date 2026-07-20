@@ -1,9 +1,6 @@
 ﻿using KaanBoard.Data;
-using KaanBoard.Entities.Identity;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace KaanBoard.Extensions
@@ -41,14 +38,6 @@ namespace KaanBoard.Extensions
                         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JWT:SecretKey"] ?? throw new InvalidOperationException("Invalid Secret Key")))
                     };
                 });
-            return services;
-        }
-
-        public static IServiceCollection ConfigureIdentity(this IServiceCollection services)
-        {
-            services.AddIdentity<ApplicationUser<Guid>, ApplicationRole<Guid>>()
-                .AddEntityFrameworkStores<ApplicationDbContext>()
-                .AddDefaultTokenProviders();
             return services;
         }
     }

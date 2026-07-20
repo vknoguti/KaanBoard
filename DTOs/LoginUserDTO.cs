@@ -2,7 +2,7 @@
 
 namespace KaanBoard.DTOs
 {
-    public class LoginRequestDTO
+    public class LoginUserDTO
     {
         [Required]
         public string UserName { get; set; } = null!;

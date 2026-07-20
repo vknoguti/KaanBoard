@@ -1,4 +1,4 @@
-﻿using KaanBoard.Entities.Identity;
+﻿using KaanBoard.Enums;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 
@@ -13,11 +13,10 @@ namespace KaanBoard.Entities
         //[Column(TypeName = "uuid")]
         public Guid IdUser { get; set; }
 
-        [Column(TypeName = "varchar(40)")]
-        public string? FlUserRole { get; set; }
+        public BoardRole UserRole { get; set; }
 
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public ApplicationUser<Guid> User { get; set; } = null!;
+        public User<Guid> User { get; set; } = null!;
 
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public Board Board { get; set; } = null!;
