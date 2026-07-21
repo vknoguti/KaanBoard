@@ -85,19 +85,19 @@ namespace KaanBoard.Data
             // Relacionamento N:N com definição do papel (BoardRole) de cada membro no quadro
             var userBoards = new List<UserBoard>
             {
-                new UserBoard
+                new()
                 {
                     IdUser = adminUser.Id,
                     IdBoard = boardId,
                     UserRole = BoardRole.Owner
                 },
-                new UserBoard
+                new()
                 {
                     IdUser = memberUser.Id,
                     IdBoard = boardId,
                     UserRole = BoardRole.Member
                 },
-                new UserBoard
+                new()
                 {
                     IdUser = viewerUser.Id,
                     IdBoard = boardId,
@@ -116,10 +116,10 @@ namespace KaanBoard.Data
 
             var columns = new List<Column>
             {
-                new Column { IdColumn = colTodoId, IdBoard = boardId, TxTitle = "A Fazer", Nrposition = 1 },
-                new Column { IdColumn = colInProgressId, IdBoard = boardId, TxTitle = "Em Andamento", Nrposition = 2 },
-                new Column { IdColumn = colReviewId, IdBoard = boardId, TxTitle = "Em Revisão", Nrposition = 3 },
-                new Column { IdColumn = colDoneId, IdBoard = boardId, TxTitle = "Concluído", Nrposition = 4 }
+                new() { IdColumn = colTodoId, IdBoard = boardId, TxTitle = "A Fazer", Nrposition = 1 },
+                new() { IdColumn = colInProgressId, IdBoard = boardId, TxTitle = "Em Andamento", Nrposition = 2 },
+                new() { IdColumn = colReviewId, IdBoard = boardId, TxTitle = "Em Revisão", Nrposition = 3 },
+                new() { IdColumn = colDoneId, IdBoard = boardId, TxTitle = "Concluído", Nrposition = 4 }
             };
             await context.Columns.AddRangeAsync(columns);
 
@@ -132,7 +132,7 @@ namespace KaanBoard.Data
 
             var tasks = new List<TaskItem>
             {
-                new TaskItem
+                new()
                 {
                     IdTaskItem = task1Id,
                     IdColumn = colDoneId,
@@ -143,7 +143,7 @@ namespace KaanBoard.Data
                     DueDate = DateTimeOffset.UtcNow.AddDays(-1),
                     UpdatedAt = DateTimeOffset.UtcNow
                 },
-                new TaskItem
+                new()
                 {
                     IdTaskItem = task2Id,
                     IdColumn = colInProgressId,
@@ -154,7 +154,7 @@ namespace KaanBoard.Data
                     DueDate = DateTimeOffset.UtcNow.AddDays(3),
                     UpdatedAt = DateTimeOffset.UtcNow
                 },
-                new TaskItem
+                new()
                 {
                     IdTaskItem = task3Id,
                     IdColumn = colTodoId,
@@ -175,14 +175,14 @@ namespace KaanBoard.Data
             // A chave primária desta tabela é composta por (Iduser, IdTaskItem).
             var taskHistories = new List<TaskItemUserHistory>
             {
-                new TaskItemUserHistory
+                new()
                 {
                     Iduser = adminUser.Id,
                     IdTaskItem = task1Id,
                     ActionDate = DateTimeOffset.UtcNow.AddHours(-10),
                     TxAction = "Criou e moveu a tarefa para a coluna Concluído."
                 },
-                new TaskItemUserHistory
+                new()
                 {
                     Iduser = memberUser.Id,
                     IdTaskItem = task2Id,
@@ -200,7 +200,7 @@ namespace KaanBoard.Data
 
             var comments = new List<Comment>
             {
-                new Comment
+                new()
                 {
                     IdComment = comment1Id,
                     IdUser = adminUser.Id,
@@ -210,7 +210,7 @@ namespace KaanBoard.Data
                     DtCreation = DateTimeOffset.UtcNow.AddHours(-1),
                     IsDeleted = false
                 },
-                new Comment
+                new()
                 {
                     IdComment = comment2Id,
                     IdUser = memberUser.Id,
@@ -229,7 +229,7 @@ namespace KaanBoard.Data
             // ==========================================
             var commentHistories = new List<CommentHistory>
             {
-                new CommentHistory
+                new()
                 {
                     IdCommentHistory = Guid.NewGuid(),
                     IdComment = comment1Id,
@@ -237,7 +237,7 @@ namespace KaanBoard.Data
                     DtAction = DateTimeOffset.UtcNow.AddHours(-1),
                     TxAction = "Comentário criado no card da tarefa."
                 },
-                new CommentHistory
+                new()
                 {
                     IdCommentHistory = Guid.NewGuid(),
                     IdComment = comment2Id,

@@ -8,8 +8,8 @@ namespace KaanBoard.DTOs
         [Required(ErrorMessage = nameof(UserName) + " is required")]
         public string UserName { get; set; } = null!;
 
-        [Required(ErrorMessage = nameof(PasswordHash) + " is required")]
-        public string PasswordHash { get; set; } = null!;
+        [Required(ErrorMessage = nameof(Password) + " is required")]
+        public string Password { get; set; } = null!;
 
         [Required(ErrorMessage = nameof(Name) + " is required")]
         public string Name { get; set; } = null!;
