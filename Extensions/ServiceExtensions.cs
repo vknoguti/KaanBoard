@@ -1,4 +1,7 @@
 ﻿using KaanBoard.Data;
+using KaanBoard.DTOs;
+using KaanBoard.Enums;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
@@ -36,6 +39,19 @@ namespace KaanBoard.Extensions
                         ValidIssuer = configuration["JWT:ValidIssuer"] ?? "",
                         ValidAudience = configuration["JWT:ValidAudience"] ?? "",
                         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JWT:SecretKey"] ?? throw new InvalidOperationException("Invalid Secret Key")))
+                    };
+
+                    options.Events = new JwtBearerEvents
+                    {
+                        OnMessageReceived = ctx =>
+                        {
+                            ctx.Request.Cookies.TryGetValue(nameof(TokenDTO.AccessToken), out var accessToken);
+                            if (!string.IsNullOrEmpty(accessToken))
+                            {
+                                ctx.Token = accessToken;
+                            }
+                            return Task.CompletedTask;
+                        }
                     };
                 });
             return services;

@@ -4,7 +4,9 @@ using KaanBoard.DTOs;
 using KaanBoard.DTOs.Mappings;
 using KaanBoard.Enums;
 using KaanBoard.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace KaanBoard.Controllers
 {
@@ -13,12 +15,14 @@ namespace KaanBoard.Controllers
     public class AuthenticationController : ControllerBase
     {
         private readonly IAuthenticationService _authService;
+        private readonly ITokenService _tokenService;
         //REMOVER DEPOIS
         private readonly ApplicationDbContext _context;
-        public AuthenticationController(IAuthenticationService authService, ApplicationDbContext context)
+        public AuthenticationController(IAuthenticationService authService, ApplicationDbContext context, ITokenService tokenService)
         {
             _authService = authService;
             _context = context;
+            _tokenService = tokenService;
         }
 
         //private static readonly RegisterUserDTO DefaultRegister = new RegisterUserDTO
@@ -28,6 +32,7 @@ namespace KaanBoard.Controllers
         //    UserName = "UserName1",
         //    Password = "Password1*" // Fixed spelling here
         //};
+        [Authorize]
         [HttpGet]
         public async Task<IActionResult> ListUsers()
         {
@@ -57,18 +62,44 @@ namespace KaanBoard.Controllers
         [HttpPost("Login")]
         public async Task<IActionResult> Login([FromBody] LoginUserDTO login)
         {
-            var loginResponse = await _authService.Login(login);
+            LoginResponse loginResponse = await _authService.Login(login);
             
-            if(loginResponse.StatusCode == LoginStatus.InvalidCredentials)
+            if(loginResponse.StatusCode == LoginStatus.NotFound)
             {
-                NotFound(loginResponse);
+                return NotFound(loginResponse);
             }
 
             if(loginResponse.StatusCode == LoginStatus.InvalidCredentials)
             {
-                BadRequest(loginResponse);
+                return BadRequest(loginResponse);
             }
 
+            //context.Response.Cookies.Append(nameof(TokenDTO.AccessToken), loginResponse.tokenDTO!.AccessToken,
+            //    new CookieOptions
+            //    {
+            //        Expires = DateTimeOffset.UtcNow.AddMinutes(_accessTokenExpiryMinutes),
+            //        //MUDAR AQUI
+            //        HttpOnly = false,
+            //        IsEssential = true,
+            //        Secure = true,
+            //        //MUDAR AQUI
+            //        SameSite = SameSiteMode.None
+            //    });
+
+            //context.Response.Cookies.Append(nameof(TokenDTO.RefreshToken), tokenDTO.RefreshToken,
+            //    new CookieOptions
+            //    {
+            //        Expires = DateTimeOffset.UtcNow.AddDays(_refreshTokenExpiryDays),
+            //        //MUDAR AQUI
+            //        HttpOnly = false,
+            //        IsEssential = true,
+            //        Secure = true,
+            //        //MUDAR AQUI
+            //        SameSite = SameSiteMode.None
+            //    });
+
+
+            _tokenService.SetTokensInsideCookie(loginResponse.tokenDTO!, HttpContext);
             return Ok(loginResponse);
         }
     }

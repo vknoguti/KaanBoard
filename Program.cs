@@ -16,16 +16,14 @@ builder.Services.AddControllers().AddJsonOptions(options =>
 
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped(typeof(IPasswordHasher<>), typeof(PasswordHasher<>));
+builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
+
 builder.Services
     .ConfigureSqlContext(builder.Configuration, builder.Environment)
     //.ConfigureIdentity()
     .ConfigureJWT(builder.Configuration);
-
-builder.Services.AddScoped<ITokenService, TokenService>();
-
-builder.Services.AddScoped(typeof(IPasswordHasher<>), typeof(PasswordHasher<>));
-
-builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
 
 var app = builder.Build();
 
@@ -38,6 +36,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseAuthentication();
 
 app.UseAuthorization();
 

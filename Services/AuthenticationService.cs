@@ -6,6 +6,7 @@ using KaanBoard.Enums;
 using KaanBoard.Extensions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace KaanBoard.Services
 {
@@ -13,10 +14,12 @@ namespace KaanBoard.Services
     {
         private readonly ApplicationDbContext _context;
         private readonly IPasswordHasher<User<Guid>> _passwordHasher;
-        public AuthenticationService(ApplicationDbContext context, IPasswordHasher<User<Guid>> passwordHasher)
+        private readonly ITokenService _tokenService;
+        public AuthenticationService(ApplicationDbContext context, IPasswordHasher<User<Guid>> passwordHasher, ITokenService tokenService)
         {
             _context = context;
-            _passwordHasher = passwordHasher; 
+            _passwordHasher = passwordHasher;
+            _tokenService = tokenService;
         }
 
         public async Task<RegisterResponse> Register(RegisterUserDTO userRegister)
@@ -54,7 +57,7 @@ namespace KaanBoard.Services
         {
             var loginResponse = new LoginResponse();
 
-            var targetUser = await _context.Users.FirstAsync(t => t.UserName == loginUser.UserName);
+            var targetUser = await _context.Users.FirstOrDefaultAsync(t => t.UserName == loginUser.UserName);
             if (targetUser is null)
             {
                 return (LoginResponse)loginResponse.GenerateResponse<LoginStatus>(LoginStatus.NotFound);
@@ -66,7 +69,20 @@ namespace KaanBoard.Services
                 return (LoginResponse)loginResponse.GenerateResponse<LoginStatus>(LoginStatus.InvalidCredentials);
             }
 
-            return (LoginResponse)loginResponse.GenerateResponse<LoginStatus>(LoginStatus.Success);
+            var response = (LoginResponse)loginResponse.GenerateResponse<LoginStatus>(LoginStatus.Success);
+            var acessToken = _tokenService.GenerateAccessToken(targetUser.ToClaimsUser<Guid>());
+            var acessTokenExpiration = _tokenService.GetClaimsPrincipal(acessToken).Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Exp);
+
+
+
+
+            response.tokenDTO = new TokenDTO
+            {
+                AccessToken = acessToken,
+                AcessTokenExpiresAt = _tokenService.GetClaimsPrincipal(ac)
+                RefreshToken = _tokenService.GenerateRefreshToken()
+            };
+            return response;
         }
     }
 }
