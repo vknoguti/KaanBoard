@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace KaanBoard.Controllers
 {
-    [ApiController()]
+    [ApiController]
     [Route("api/[controller]")]
     public class AuthenticationController : ControllerBase
     {
@@ -63,7 +63,7 @@ namespace KaanBoard.Controllers
         public async Task<IActionResult> Login([FromBody] LoginUserDTO login)
         {
             LoginResponse loginResponse = await _authService.Login(login);
-            
+        
             if(loginResponse.StatusCode == LoginStatus.NotFound)
             {
                 return NotFound(loginResponse);
@@ -74,32 +74,31 @@ namespace KaanBoard.Controllers
                 return BadRequest(loginResponse);
             }
 
-            //context.Response.Cookies.Append(nameof(TokenDTO.AccessToken), loginResponse.tokenDTO!.AccessToken,
-            //    new CookieOptions
-            //    {
-            //        Expires = DateTimeOffset.UtcNow.AddMinutes(_accessTokenExpiryMinutes),
-            //        //MUDAR AQUI
-            //        HttpOnly = false,
-            //        IsEssential = true,
-            //        Secure = true,
-            //        //MUDAR AQUI
-            //        SameSite = SameSiteMode.None
-            //    });
+            var tokenDTO = loginResponse.tokenDTO;
 
-            //context.Response.Cookies.Append(nameof(TokenDTO.RefreshToken), tokenDTO.RefreshToken,
-            //    new CookieOptions
-            //    {
-            //        Expires = DateTimeOffset.UtcNow.AddDays(_refreshTokenExpiryDays),
-            //        //MUDAR AQUI
-            //        HttpOnly = false,
-            //        IsEssential = true,
-            //        Secure = true,
-            //        //MUDAR AQUI
-            //        SameSite = SameSiteMode.None
-            //    });
+            this.Response.Cookies.Append(nameof(TokenDTO.AccessToken), tokenDTO!.AccessToken,
+                new CookieOptions
+                {
+                    Expires = tokenDTO?.AcessTokenExpiresAt,
+                    //MUDAR AQUI
+                    HttpOnly = false,
+                    IsEssential = true,
+                    Secure = true,
+                    //MUDAR AQUI
+                    SameSite = SameSiteMode.None
+                });
 
-
-            _tokenService.SetTokensInsideCookie(loginResponse.tokenDTO!, HttpContext);
+            this.Response.Cookies.Append(nameof(TokenDTO.RefreshToken), tokenDTO!.RefreshToken,
+                new CookieOptions
+                {
+                    Expires = tokenDTO?.RefreshTokenExpiresAt,
+                    //MUDAR AQUI
+                    HttpOnly = false,
+                    IsEssential = true,
+                    Secure = true,
+                    //MUDAR AQUI
+                    SameSite = SameSiteMode.None
+                });
             return Ok(loginResponse);
         }
     }

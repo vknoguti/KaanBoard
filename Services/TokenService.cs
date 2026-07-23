@@ -24,6 +24,11 @@ namespace KaanBoard.Services
             _refreshTokenExpiryDays = _config.GetSection("JWT").GetValue<int>("RefreshTokenValidityDays", 7);
         }
 
+        public DateTimeOffset AccessTokenExpirationDate()
+        {
+            return DateTimeOffset.UtcNow.AddMinutes((double)_accessTokenExpiryMinutes);
+        }
+
         public string GenerateAccessToken(ClaimsUserDTO<Guid> claimsUser)
         {
             var issuer = _config["JWT:Issuer"] ?? throw new InvalidOperationException("Invalid Issuer");
@@ -51,6 +56,7 @@ namespace KaanBoard.Services
             var token = tokenHandler.CreateJwtSecurityToken(tokenDescriptor);
             return tokenHandler.WriteToken(token);
         }
+        
 
         public string GenerateRefreshToken()
         {
@@ -72,8 +78,8 @@ namespace KaanBoard.Services
                 ValidateLifetime = false,
 
                 //MUDAR AQUI
-                ValidateAudience = true,
-                ValidateIssuer = true,
+                ValidateAudience = false,
+                ValidateIssuer = false,
                 ValidateIssuerSigningKey = true,
 
                 IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_secretKey)),
@@ -89,31 +95,9 @@ namespace KaanBoard.Services
             return principal;
         }
 
-        public void SetTokensInsideCookie(TokenDTO tokenDTO, HttpContext context)
+        public DateTimeOffset RefreshTokenExpirationDate()
         {
-            context.Response.Cookies.Append(nameof(TokenDTO.AccessToken), tokenDTO.AccessToken,
-                new CookieOptions
-                {
-                    Expires = DateTimeOffset.UtcNow.AddMinutes(_accessTokenExpiryMinutes),
-                    //MUDAR AQUI
-                    HttpOnly = false,
-                    IsEssential = true,
-                    Secure = true,
-                    //MUDAR AQUI
-                    SameSite = SameSiteMode.None
-                });
-
-            context.Response.Cookies.Append(nameof(TokenDTO.RefreshToken), tokenDTO.RefreshToken,
-                new CookieOptions
-                {
-                    Expires = DateTimeOffset.UtcNow.AddDays(_refreshTokenExpiryDays),
-                    //MUDAR AQUI
-                    HttpOnly = false,
-                    IsEssential = true,
-                    Secure = true,
-                    //MUDAR AQUI
-                    SameSite = SameSiteMode.None
-                });
+            return DateTimeOffset.UtcNow.AddDays((double)_refreshTokenExpiryDays);
         }
     }
 }

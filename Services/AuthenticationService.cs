@@ -74,13 +74,12 @@ namespace KaanBoard.Services
             var acessTokenExpiration = _tokenService.GetClaimsPrincipal(acessToken).Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Exp);
 
 
-
-
             response.tokenDTO = new TokenDTO
             {
                 AccessToken = acessToken,
-                AcessTokenExpiresAt = _tokenService.GetClaimsPrincipal(ac)
-                RefreshToken = _tokenService.GenerateRefreshToken()
+                AcessTokenExpiresAt = _tokenService.AccessTokenExpirationDate(),
+                RefreshToken = _tokenService.GenerateRefreshToken(),
+                RefreshTokenExpiresAt = _tokenService.RefreshTokenExpirationDate()
             };
             return response;
         }

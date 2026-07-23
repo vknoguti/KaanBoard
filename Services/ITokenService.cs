@@ -10,6 +10,8 @@ namespace KaanBoard.Services
         string GenerateRefreshToken();
 
         ClaimsPrincipal GetClaimsPrincipal(string token);
-        public void SetTokensInsideCookie(TokenDTO tokenDTO, HttpContext context);
+
+        DateTimeOffset AccessTokenExpirationDate();
+        DateTimeOffset RefreshTokenExpirationDate();
     }
 }
