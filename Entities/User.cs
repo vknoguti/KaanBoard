@@ -25,6 +25,12 @@ namespace KaanBoard.Entities
         [Column(TypeName = "nvarchar(max)")]
         public string PasswordHash { get; set; } = null!;
 
+        [Column(TypeName = "nvarchar(max)")]
+        public string? RefreshToken { get; set; }
+
+        [Column(TypeName = "datetimeoffset(7)")]
+        public DateTimeOffset? RefreshTokenExpiryDate { get; set; }
+
         [Column(TypeName = "nvarchar(50)")]
         public string? PhoneNumber { get; set; }
 

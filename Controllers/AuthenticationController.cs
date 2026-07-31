@@ -25,6 +25,15 @@ namespace KaanBoard.Controllers
             _tokenService = tokenService;
         }
 
+        [HttpGet("TesteClaims")]
+        public IActionResult TestandoClaims()
+        {
+            Request.Cookies.TryGetValue(nameof(TokenDTO.AccessToken), out var accessToken);
+            Request.Cookies.TryGetValue(nameof(TokenDTO.RefreshToken), out var refreshToken);
+            return Ok(new { accessToken, refreshToken });
+        }
+
+
         //private static readonly RegisterUserDTO DefaultRegister = new RegisterUserDTO
         //{
         //    Name = "Um nome qualquer aí",
@@ -39,7 +48,36 @@ namespace KaanBoard.Controllers
             return Ok(_context.Users);
         }
 
-        [HttpPost("Register")]
+        [HttpPost("refresh-token")]
+        public async Task<IActionResult> RenewTokenJWT()
+        {
+            Request.Cookies.TryGetValue(nameof(TokenDTO.AccessToken), out var accessToken);
+            Request.Cookies.TryGetValue(nameof(TokenDTO.RefreshToken), out var refreshToken);
+            if (accessToken is null || refreshToken is null)
+            {
+                return BadRequest("Invalid Cookie");
+            }
+
+            var renewResponse = await _authService.RenewJWTWithRefreshToken(
+                new TokenDTO { AccessToken = accessToken, RefreshToken = refreshToken });
+
+            if(renewResponse.StatusCode == RenewJWTStatus.Success)
+            {
+                return Ok(renewResponse);
+            }
+
+            if(renewResponse.StatusCode == RenewJWTStatus.NullAcessToken 
+                || renewResponse.StatusCode == RenewJWTStatus.NullRefreshToken 
+                || renewResponse.StatusCode == RenewJWTStatus.InvalidAccessToken 
+                || renewResponse.StatusCode == RenewJWTStatus.InvalidRefreshToken)
+            {
+                return BadRequest(renewResponse);
+            }
+
+            return Ok(renewResponse);
+        }
+
+        [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterUserDTO registerUser)
         {
             if (!ModelState.IsValid)
@@ -59,7 +97,7 @@ namespace KaanBoard.Controllers
             return Ok(registerResponse);
         }
 
-        [HttpPost("Login")]
+        [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginUserDTO login)
         {
             LoginResponse loginResponse = await _authService.Login(login);

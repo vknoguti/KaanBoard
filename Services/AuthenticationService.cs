@@ -7,6 +7,7 @@ using KaanBoard.Extensions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 namespace KaanBoard.Services
 {
@@ -70,15 +71,75 @@ namespace KaanBoard.Services
             }
 
             var response = (LoginResponse)loginResponse.GenerateResponse<LoginStatus>(LoginStatus.Success);
-            var acessToken = _tokenService.GenerateAccessToken(targetUser.ToClaimsUser<Guid>());
-            var acessTokenExpiration = _tokenService.GetClaimsPrincipal(acessToken).Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Exp);
+            var accessToken = _tokenService.GenerateAccessToken(targetUser.ToClaimsUser<Guid>());
+            var refreshToken = _tokenService.GenerateRefreshToken();
 
+            //TEORICAMENTE MEXENDO NO BANCO DO REDIS
+            targetUser.RefreshToken = refreshToken;
+            targetUser.RefreshTokenExpiryDate = _tokenService.RefreshTokenExpirationDate();
+            await _context.SaveChangesAsync();
+            
+            response.tokenDTO = new TokenDTO
+            {
+                AccessToken = accessToken,
+                AcessTokenExpiresAt = _tokenService.AccessTokenExpirationDate(),
+                RefreshToken = refreshToken,
+                RefreshTokenExpiresAt = _tokenService.RefreshTokenExpirationDate()
+            };
+            return response;
+        }
+
+        public async Task<RefreshTokenResponse> RenewJWTWithRefreshToken(TokenDTO tokenDTO)
+        {
+            var response = new RefreshTokenResponse();
+            if (tokenDTO.AccessToken is null)
+            {
+                return (RefreshTokenResponse)response.GenerateResponse<RenewJWTStatus>(RenewJWTStatus.NullAcessToken);
+            }
+            if (tokenDTO.RefreshToken is null)
+            {
+                return (RefreshTokenResponse)response.GenerateResponse<RenewJWTStatus>(RenewJWTStatus.NullRefreshToken);
+            }
+
+            ClaimsPrincipal? principals = null;
+            try
+            {
+                principals = _tokenService.GetClaimsPrincipal(tokenDTO.AccessToken);
+            }
+            catch (Exception e)
+            {
+                return (RefreshTokenResponse)response.GenerateResponse<RenewJWTStatus>(RenewJWTStatus.InvalidAccessToken);
+            }
+
+            var claimsUser = principals.ToClaimsUserDTO<Guid>();
+            if (claimsUser is null)
+            {
+                return (RefreshTokenResponse)response.GenerateResponse<RenewJWTStatus>(RenewJWTStatus.InvalidAccessToken);
+            }
+
+            var targetUser = await _context.Users
+                .AsNoTracking()
+                .SingleOrDefaultAsync(u => u.Id == claimsUser.IdUser && u.UserName == claimsUser.UserName);
+
+            if (targetUser is null || targetUser.RefreshToken != tokenDTO.RefreshToken || targetUser.RefreshTokenExpiryDate < DateTimeOffset.UtcNow)
+            {
+                return (RefreshTokenResponse)response.GenerateResponse<RenewJWTStatus>(RenewJWTStatus.InvalidRefreshToken);
+            }
+
+            response = (RefreshTokenResponse)response.GenerateResponse<RenewJWTStatus>(RenewJWTStatus.Success);
+            var accessToken = _tokenService.GenerateAccessToken(targetUser.ToClaimsUser<Guid>());
+            var refreshToken = _tokenService.GenerateRefreshToken();
+
+            //TEORICAMENTE MEXENDO NO BANCO DO REDIS
+            targetUser.RefreshToken = refreshToken;
+            targetUser.RefreshTokenExpiryDate = _tokenService.RefreshTokenExpirationDate();
+            await _context.SaveChangesAsync();
 
             response.tokenDTO = new TokenDTO
             {
-                AccessToken = acessToken,
+                AccessToken = accessToken,
                 AcessTokenExpiresAt = _tokenService.AccessTokenExpirationDate(),
-                RefreshToken = _tokenService.GenerateRefreshToken(),
+                RefreshToken = refreshToken,
                 RefreshTokenExpiresAt = _tokenService.RefreshTokenExpirationDate()
             };
             return response;

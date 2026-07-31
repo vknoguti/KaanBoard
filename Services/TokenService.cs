@@ -14,19 +14,24 @@ namespace KaanBoard.Services
     {
         private readonly IConfiguration _config;
         private readonly string _secretKey;
-        private readonly int _accessTokenExpiryMinutes;
-        private readonly int _refreshTokenExpiryDays;
+        private readonly double _accessTokenExpiryMinutes;
+        private readonly double _refreshTokenExpiryDays;
+
+        private readonly double _refreshTokenExpiryMinutes;
+
         public TokenService(IConfiguration config)
         {
             _config = config;
             _secretKey = config["JWT:SecretKey"] ?? throw new InvalidOperationException("Invalid Secret Key");
-            _accessTokenExpiryMinutes = _config.GetSection("JWT").GetValue<int>("AccessTokenExpiryMinutes", 60);
-            _refreshTokenExpiryDays = _config.GetSection("JWT").GetValue<int>("RefreshTokenValidityDays", 7);
+            _accessTokenExpiryMinutes = _config.GetSection("JWT").GetValue<double>("AccessTokenExpiryMinutes", 60.0);
+            _refreshTokenExpiryDays = _config.GetSection("JWT").GetValue<double>("RefreshTokenValidityDays", 7.0);
+
+            _refreshTokenExpiryMinutes = _config.GetSection("JWT").GetValue<double>("RefreshTokenValidityMinutes", 1.0);
         }
 
         public DateTimeOffset AccessTokenExpirationDate()
         {
-            return DateTimeOffset.UtcNow.AddMinutes((double)_accessTokenExpiryMinutes);
+            return DateTimeOffset.UtcNow.AddMinutes(_accessTokenExpiryMinutes);
         }
 
         public string GenerateAccessToken(ClaimsUserDTO<Guid> claimsUser)
@@ -57,7 +62,6 @@ namespace KaanBoard.Services
             return tokenHandler.WriteToken(token);
         }
         
-
         public string GenerateRefreshToken()
         {
             var secureRandomBytes = new byte[128];
@@ -73,6 +77,8 @@ namespace KaanBoard.Services
         public ClaimsPrincipal GetClaimsPrincipal(string token)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
+
+
             var tokenValidationParameters = new TokenValidationParameters
             {
                 ValidateLifetime = false,
@@ -97,7 +103,8 @@ namespace KaanBoard.Services
 
         public DateTimeOffset RefreshTokenExpirationDate()
         {
-            return DateTimeOffset.UtcNow.AddDays((double)_refreshTokenExpiryDays);
+            //return DateTimeOffset.UtcNow.AddDays((double)_refreshTokenExpiryDays);
+            return DateTimeOffset.UtcNow.AddMinutes(_refreshTokenExpiryMinutes);
         }
     }
 }

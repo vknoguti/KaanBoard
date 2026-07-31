@@ -6,5 +6,7 @@ namespace KaanBoard.Services
     {
         public Task<RegisterResponse> Register(RegisterUserDTO registerUser);
         public Task<LoginResponse> Login(LoginUserDTO loginUser);
+
+        public Task<RefreshTokenResponse> RenewJWTWithRefreshToken(TokenDTO tokenDTO);
     }
 }
