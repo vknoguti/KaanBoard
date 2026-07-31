@@ -7,6 +7,7 @@ using KaanBoard.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi.Validations;
 
 namespace KaanBoard.Controllers
 {
@@ -25,55 +26,54 @@ namespace KaanBoard.Controllers
             _tokenService = tokenService;
         }
 
-        [HttpGet("TesteClaims")]
-        public IActionResult TestandoClaims()
+        [Authorize]
+        [HttpGet("verify-authorization")]
+        public IActionResult VerifyAuthorization()
         {
             Request.Cookies.TryGetValue(nameof(TokenDTO.AccessToken), out var accessToken);
             Request.Cookies.TryGetValue(nameof(TokenDTO.RefreshToken), out var refreshToken);
-            return Ok(new { accessToken, refreshToken });
-        }
-
-
-        //private static readonly RegisterUserDTO DefaultRegister = new RegisterUserDTO
-        //{
-        //    Name = "Um nome qualquer aí",
-        //    Email = "email@gmail.com",
-        //    UserName = "UserName1",
-        //    Password = "Password1*" // Fixed spelling here
-        //};
-        [Authorize]
-        [HttpGet]
-        public async Task<IActionResult> ListUsers()
-        {
-            return Ok(_context.Users);
+            return Ok($"You have the token JWT with active access\n" +
+                      $"Access Token: {accessToken}\n" +
+                      $"Refresh Token: {refreshToken}");
         }
 
         [HttpPost("refresh-token")]
         public async Task<IActionResult> RenewTokenJWT()
         {
-            Request.Cookies.TryGetValue(nameof(TokenDTO.AccessToken), out var accessToken);
             Request.Cookies.TryGetValue(nameof(TokenDTO.RefreshToken), out var refreshToken);
-            if (accessToken is null || refreshToken is null)
-            {
-                return BadRequest("Invalid Cookie");
-            }
 
             var renewResponse = await _authService.RenewJWTWithRefreshToken(
-                new TokenDTO { AccessToken = accessToken, RefreshToken = refreshToken });
+                new RefreshTokenDTO { RefreshToken = refreshToken });
 
-            if(renewResponse.StatusCode == RenewJWTStatus.Success)
-            {
-                return Ok(renewResponse);
-            }
-
-            if(renewResponse.StatusCode == RenewJWTStatus.NullAcessToken 
-                || renewResponse.StatusCode == RenewJWTStatus.NullRefreshToken 
-                || renewResponse.StatusCode == RenewJWTStatus.InvalidAccessToken 
+            if(renewResponse.StatusCode == RenewJWTStatus.NullRefreshToken
                 || renewResponse.StatusCode == RenewJWTStatus.InvalidRefreshToken)
             {
                 return BadRequest(renewResponse);
             }
 
+            var tokenDTO = renewResponse.tokenDTO;
+            this.Response.Cookies.Append(nameof(TokenDTO.AccessToken), tokenDTO?.AccessToken ?? string.Empty,
+                new CookieOptions
+                {
+                    Expires = tokenDTO?.AcessTokenExpiresAt,
+                    //MUDAR AQUI
+                    HttpOnly = false,
+                    IsEssential = true,
+                    Secure = true,
+                    //MUDAR AQUI
+                    SameSite = SameSiteMode.Strict
+                });
+            this.Response.Cookies.Append(nameof(TokenDTO.RefreshToken), tokenDTO?.RefreshToken ?? string.Empty,
+                new CookieOptions
+                {
+                    Expires = tokenDTO?.RefreshTokenExpiresAt,
+                    //MUDAR AQUI
+                    HttpOnly = false,
+                    IsEssential = true,
+                    Secure = true,
+                    //MUDAR AQUI
+                    SameSite = SameSiteMode.Strict
+                });
             return Ok(renewResponse);
         }
 
@@ -119,11 +119,11 @@ namespace KaanBoard.Controllers
                 {
                     Expires = tokenDTO?.AcessTokenExpiresAt,
                     //MUDAR AQUI
-                    HttpOnly = false,
+                    HttpOnly = true,
                     IsEssential = true,
                     Secure = true,
                     //MUDAR AQUI
-                    SameSite = SameSiteMode.None
+                    SameSite = SameSiteMode.Strict
                 });
 
             this.Response.Cookies.Append(nameof(TokenDTO.RefreshToken), tokenDTO!.RefreshToken,
@@ -131,11 +131,11 @@ namespace KaanBoard.Controllers
                 {
                     Expires = tokenDTO?.RefreshTokenExpiresAt,
                     //MUDAR AQUI
-                    HttpOnly = false,
+                    HttpOnly = true,
                     IsEssential = true,
                     Secure = true,
                     //MUDAR AQUI
-                    SameSite = SameSiteMode.None
+                    SameSite = SameSiteMode.Strict
                 });
             return Ok(loginResponse);
         }

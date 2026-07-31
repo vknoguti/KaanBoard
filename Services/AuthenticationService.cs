@@ -89,58 +89,43 @@ namespace KaanBoard.Services
             return response;
         }
 
-        public async Task<RefreshTokenResponse> RenewJWTWithRefreshToken(TokenDTO tokenDTO)
+        public async Task<RefreshTokenResponse> RenewJWTWithRefreshToken(RefreshTokenDTO refreshTokenDTO)
         {
             var response = new RefreshTokenResponse();
-            if (tokenDTO.AccessToken is null)
-            {
-                return (RefreshTokenResponse)response.GenerateResponse<RenewJWTStatus>(RenewJWTStatus.NullAcessToken);
-            }
-            if (tokenDTO.RefreshToken is null)
+            if (refreshTokenDTO.RefreshToken is null)
             {
                 return (RefreshTokenResponse)response.GenerateResponse<RenewJWTStatus>(RenewJWTStatus.NullRefreshToken);
             }
 
-            ClaimsPrincipal? principals = null;
-            try
-            {
-                principals = _tokenService.GetClaimsPrincipal(tokenDTO.AccessToken);
-            }
-            catch (Exception e)
-            {
-                return (RefreshTokenResponse)response.GenerateResponse<RenewJWTStatus>(RenewJWTStatus.InvalidAccessToken);
-            }
-
-            var claimsUser = principals.ToClaimsUserDTO<Guid>();
-            if (claimsUser is null)
-            {
-                return (RefreshTokenResponse)response.GenerateResponse<RenewJWTStatus>(RenewJWTStatus.InvalidAccessToken);
-            }
-
-            var targetUser = await _context.Users
-                .AsNoTracking()
-                .SingleOrDefaultAsync(u => u.Id == claimsUser.IdUser && u.UserName == claimsUser.UserName);
-
-            if (targetUser is null || targetUser.RefreshToken != tokenDTO.RefreshToken || targetUser.RefreshTokenExpiryDate < DateTimeOffset.UtcNow)
+            var targetUser = await _context.Users.SingleOrDefaultAsync(u => u.RefreshToken == refreshTokenDTO.RefreshToken);
+            if(targetUser is null || targetUser.RefreshToken is null || targetUser.RefreshTokenExpiryDate < DateTimeOffset.UtcNow)
             {
                 return (RefreshTokenResponse)response.GenerateResponse<RenewJWTStatus>(RenewJWTStatus.InvalidRefreshToken);
             }
 
-            response = (RefreshTokenResponse)response.GenerateResponse<RenewJWTStatus>(RenewJWTStatus.Success);
-            var accessToken = _tokenService.GenerateAccessToken(targetUser.ToClaimsUser<Guid>());
+            var claimsUser = targetUser.ToClaimsUser<Guid>();
+            var accessToken = _tokenService.GenerateAccessToken(claimsUser);
             var refreshToken = _tokenService.GenerateRefreshToken();
 
-            //TEORICAMENTE MEXENDO NO BANCO DO REDIS
+            var principals = _tokenService.GetClaimsPrincipal(accessToken);
+
+            var refreshTokenExpirationDate = _tokenService.RefreshTokenExpirationDate();
+            var accessTokenExpirationDate = _tokenService.AccessTokenExpirationDate();
+
+            var expirationClaimIsConverted = long.TryParse(principals.FindFirst("exp")?.Value, out var expirationClaim);
+            accessTokenExpirationDate = expirationClaimIsConverted ? DateTimeOffset.FromUnixTimeSeconds(expirationClaim) : accessTokenExpirationDate; 
+
             targetUser.RefreshToken = refreshToken;
-            targetUser.RefreshTokenExpiryDate = _tokenService.RefreshTokenExpirationDate();
+            targetUser.RefreshTokenExpiryDate = refreshTokenExpirationDate;
             await _context.SaveChangesAsync();
 
+            response = (RefreshTokenResponse)response.GenerateResponse<RenewJWTStatus>(RenewJWTStatus.Success);
             response.tokenDTO = new TokenDTO
             {
                 AccessToken = accessToken,
-                AcessTokenExpiresAt = _tokenService.AccessTokenExpirationDate(),
+                AcessTokenExpiresAt = accessTokenExpirationDate,
                 RefreshToken = refreshToken,
-                RefreshTokenExpiresAt = _tokenService.RefreshTokenExpirationDate()
+                RefreshTokenExpiresAt = refreshTokenExpirationDate
             };
             return response;
         }

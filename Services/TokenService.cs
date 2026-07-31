@@ -78,7 +78,6 @@ namespace KaanBoard.Services
         {
             var tokenHandler = new JwtSecurityTokenHandler();
 
-
             var tokenValidationParameters = new TokenValidationParameters
             {
                 ValidateLifetime = false,
