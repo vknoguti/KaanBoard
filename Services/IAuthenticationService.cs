@@ -4,9 +4,9 @@ namespace KaanBoard.Services
 {
     public interface IAuthenticationService
     {
-        public Task<RegisterResponse> Register(RegisterUserDTO registerUser);
-        public Task<LoginResponse> Login(LoginUserDTO loginUser);
+        public Task<BaseResponse1<RegisterResponseDTO<TKey>>> Register<TKey>(RegisterUserDTO userRegister);
+        public Task<BaseResponse1<LoginResponseDTO>> Login(LoginUserDTO loginUser);
 
-        public Task<RefreshTokenResponse> RenewJWTWithRefreshToken(RefreshTokenDTO refreshTokenDTO);
+        public Task<BaseResponse1<RefreshTokenResponseDTO>> RenewJWTWithRefreshToken(RefreshTokenDTO refreshTokenDTO);
     }
 }

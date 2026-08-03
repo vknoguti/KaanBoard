@@ -45,13 +45,13 @@ namespace KaanBoard.Controllers
             var renewResponse = await _authService.RenewJWTWithRefreshToken(
                 new RefreshTokenDTO { RefreshToken = refreshToken });
 
-            if(renewResponse.StatusCode == RenewJWTStatus.NullRefreshToken
-                || renewResponse.StatusCode == RenewJWTStatus.InvalidRefreshToken)
+            if(renewResponse.StatusCode == AppStatus.NullRefreshToken
+                || renewResponse.StatusCode == AppStatus.InvalidRefreshToken)
             {
                 return BadRequest(renewResponse);
             }
 
-            var tokenDTO = renewResponse.tokenDTO;
+            var tokenDTO = renewResponse?.Data?.TokenDTO;
             this.Response.Cookies.Append(nameof(TokenDTO.AccessToken), tokenDTO?.AccessToken ?? string.Empty,
                 new CookieOptions
                 {
@@ -85,12 +85,12 @@ namespace KaanBoard.Controllers
                 return BadRequest(ModelState.Values.SelectMany(v => v.Errors));
             }
 
-            var registerResponse = await _authService.Register(registerUser);
-            if(registerResponse.StatusCode == RegisterStatus.UsernameAlreadyExists)
+            var registerResponse = await _authService.Register<Guid>(registerUser);
+            if(registerResponse.StatusCode == AppStatus.UsernameAlreadyExists)
             {
                 return BadRequest(registerResponse);
             }
-            if(registerResponse.StatusCode == RegisterStatus.EmailAlreadyExists)
+            if(registerResponse.StatusCode == AppStatus.EmailAlreadyExists)
             {
                 return BadRequest(registerResponse);
             }
@@ -100,19 +100,19 @@ namespace KaanBoard.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginUserDTO login)
         {
-            LoginResponse loginResponse = await _authService.Login(login);
+            var loginResponse = await _authService.Login(login);
         
-            if(loginResponse.StatusCode == LoginStatus.NotFound)
+            if(loginResponse.StatusCode == AppStatus.UserNotFound)
             {
                 return NotFound(loginResponse);
             }
 
-            if(loginResponse.StatusCode == LoginStatus.InvalidCredentials)
+            if(loginResponse.StatusCode == AppStatus.InvalidCredentials)
             {
                 return BadRequest(loginResponse);
             }
 
-            var tokenDTO = loginResponse.tokenDTO;
+            var tokenDTO = loginResponse?.Data?.TokenDTO;
 
             this.Response.Cookies.Append(nameof(TokenDTO.AccessToken), tokenDTO!.AccessToken,
                 new CookieOptions

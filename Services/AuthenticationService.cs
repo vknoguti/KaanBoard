@@ -23,20 +23,20 @@ namespace KaanBoard.Services
             _tokenService = tokenService;
         }
 
-        public async Task<RegisterResponse> Register(RegisterUserDTO userRegister)
+        public async Task<BaseResponse1<RegisterResponseDTO<TKey>>> Register<TKey>(RegisterUserDTO userRegister)
         {
-            var registerResponse = new RegisterResponse();
+            var registerResponse = new BaseResponse1<RegisterResponseDTO<TKey>>();
             var queryUser =  _context.Users.AsQueryable().AsNoTracking();
             var userNameFound = await queryUser.AnyAsync(u => u.UserName == userRegister.UserName);
             if (userNameFound)
             {
-                return (RegisterResponse)registerResponse.GenerateResponse<RegisterStatus>(RegisterStatus.UsernameAlreadyExists);
+                return registerResponse.GenerateResponse1<RegisterResponseDTO<TKey>>(AppStatus.UsernameAlreadyExists);
             } 
             
             var emailFound = await queryUser.AnyAsync(u => u.Email == userRegister.Email);
             if (emailFound)
             {
-                return (RegisterResponse)registerResponse.GenerateResponse<RegisterStatus>(RegisterStatus.EmailAlreadyExists);
+                return registerResponse.GenerateResponse1<RegisterResponseDTO<TKey>>(AppStatus.EmailAlreadyExists);
             }
 
             var userMapped = new User<Guid>();
@@ -48,29 +48,30 @@ namespace KaanBoard.Services
             
             if(success <= 0)
             {
-                return (RegisterResponse)registerResponse.GenerateResponse<RegisterStatus>(RegisterStatus.Failed);
+                return registerResponse.GenerateResponse1<RegisterResponseDTO<TKey>>(AppStatus.Failed);
             }
 
-            return (RegisterResponse)registerResponse.GenerateResponse<RegisterStatus>(RegisterStatus.Success);
+            return registerResponse.GenerateResponse1<RegisterResponseDTO<TKey>>(AppStatus.SuccessRegistration);
         }
 
-        public async Task<LoginResponse> Login(LoginUserDTO loginUser)
+      
+        public async Task<BaseResponse1<LoginResponseDTO>> Login(LoginUserDTO loginUser) 
         {
-            var loginResponse = new LoginResponse();
+            var loginResponse = new BaseResponse1<LoginResponseDTO>();
 
             var targetUser = await _context.Users.FirstOrDefaultAsync(t => t.UserName == loginUser.UserName);
             if (targetUser is null)
             {
-                return (LoginResponse)loginResponse.GenerateResponse<LoginStatus>(LoginStatus.NotFound);
+                return loginResponse.GenerateResponse1<LoginResponseDTO>(AppStatus.UserNotFound);
             }
             
             var matchPassword = _passwordHasher.VerifyHashedPassword(targetUser, targetUser.PasswordHash, loginUser.Password);
             if(matchPassword != PasswordVerificationResult.Success)
             {
-                return (LoginResponse)loginResponse.GenerateResponse<LoginStatus>(LoginStatus.InvalidCredentials);
+                return loginResponse.GenerateResponse1<LoginResponseDTO>(AppStatus.InvalidCredentials);
             }
 
-            var response = (LoginResponse)loginResponse.GenerateResponse<LoginStatus>(LoginStatus.Success);
+            var response = loginResponse.GenerateResponse1<LoginResponseDTO>(AppStatus.SuccessLogin);
             var accessToken = _tokenService.GenerateAccessToken(targetUser.ToClaimsUser<Guid>());
             var refreshToken = _tokenService.GenerateRefreshToken();
 
@@ -78,29 +79,32 @@ namespace KaanBoard.Services
             targetUser.RefreshToken = refreshToken;
             targetUser.RefreshTokenExpiryDate = _tokenService.RefreshTokenExpirationDate();
             await _context.SaveChangesAsync();
-            
-            response.tokenDTO = new TokenDTO
+
+            response.Data = new LoginResponseDTO
             {
-                AccessToken = accessToken,
-                AcessTokenExpiresAt = _tokenService.AccessTokenExpirationDate(),
-                RefreshToken = refreshToken,
-                RefreshTokenExpiresAt = _tokenService.RefreshTokenExpirationDate()
+                TokenDTO = new TokenDTO
+                {
+                    AccessToken = accessToken,
+                    AcessTokenExpiresAt = _tokenService.AccessTokenExpirationDate(),
+                    RefreshToken = refreshToken,
+                    RefreshTokenExpiresAt = _tokenService.RefreshTokenExpirationDate()
+                }
             };
             return response;
         }
 
-        public async Task<RefreshTokenResponse> RenewJWTWithRefreshToken(RefreshTokenDTO refreshTokenDTO)
+        public async Task<BaseResponse1<RefreshTokenResponseDTO>> RenewJWTWithRefreshToken(RefreshTokenDTO refreshTokenDTO)
         {
-            var response = new RefreshTokenResponse();
+            var response = new BaseResponse1<RefreshTokenResponseDTO>();
             if (refreshTokenDTO.RefreshToken is null)
             {
-                return (RefreshTokenResponse)response.GenerateResponse<RenewJWTStatus>(RenewJWTStatus.NullRefreshToken);
+                return response.GenerateResponse1<RefreshTokenResponseDTO>(AppStatus.NullRefreshToken);
             }
 
             var targetUser = await _context.Users.SingleOrDefaultAsync(u => u.RefreshToken == refreshTokenDTO.RefreshToken);
             if(targetUser is null || targetUser.RefreshToken is null || targetUser.RefreshTokenExpiryDate < DateTimeOffset.UtcNow)
             {
-                return (RefreshTokenResponse)response.GenerateResponse<RenewJWTStatus>(RenewJWTStatus.InvalidRefreshToken);
+                return response.GenerateResponse1<RefreshTokenResponseDTO>(AppStatus.InvalidRefreshToken);
             }
 
             var claimsUser = targetUser.ToClaimsUser<Guid>();
@@ -112,20 +116,23 @@ namespace KaanBoard.Services
             var refreshTokenExpirationDate = _tokenService.RefreshTokenExpirationDate();
             var accessTokenExpirationDate = _tokenService.AccessTokenExpirationDate();
 
-            var expirationClaimIsConverted = long.TryParse(principals.FindFirst("exp")?.Value, out var expirationClaim);
+            var expirationClaimIsConverted = long.TryParse(principals?.FindFirst("exp")?.Value, out var expirationClaim);
             accessTokenExpirationDate = expirationClaimIsConverted ? DateTimeOffset.FromUnixTimeSeconds(expirationClaim) : accessTokenExpirationDate; 
 
             targetUser.RefreshToken = refreshToken;
             targetUser.RefreshTokenExpiryDate = refreshTokenExpirationDate;
             await _context.SaveChangesAsync();
 
-            response = (RefreshTokenResponse)response.GenerateResponse<RenewJWTStatus>(RenewJWTStatus.Success);
-            response.tokenDTO = new TokenDTO
+            response = response.GenerateResponse1<RefreshTokenResponseDTO>(AppStatus.SuccessRenewAccessToken);
+            response.Data = new RefreshTokenResponseDTO
             {
-                AccessToken = accessToken,
-                AcessTokenExpiresAt = accessTokenExpirationDate,
-                RefreshToken = refreshToken,
-                RefreshTokenExpiresAt = refreshTokenExpirationDate
+                TokenDTO = new TokenDTO
+                {
+                    AccessToken = accessToken,
+                    AcessTokenExpiresAt = accessTokenExpirationDate,
+                    RefreshToken = refreshToken,
+                    RefreshTokenExpiresAt = refreshTokenExpirationDate
+                }
             };
             return response;
         }

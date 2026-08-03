@@ -17,6 +17,19 @@ namespace KaanBoard.DTOs.Mappings
             };
             return user;
         }
+    
+        public static RegisterResponseDTO<TKey>? ToRegisterDTO<TKey>(this User<TKey> user) where TKey: IEquatable<TKey>
+        {
+            return new RegisterResponseDTO<TKey>
+            {
+                Id = user.Id,
+                Name = user.Name,
+                Email = user.Email,
+                UserName = user.UserName,
+                CreatedAt = user.CreatedAt,
+                PhoneNumber = user.PhoneNumber
+            };
+        }
 
         public static ClaimsUserDTO<TKey> ToClaimsUser<TKey>(this User<TKey> user) where TKey : IEquatable<TKey>
         {

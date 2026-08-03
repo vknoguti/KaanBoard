@@ -9,7 +9,9 @@ namespace KaanBoard.Services
         string GenerateAccessToken(ClaimsUserDTO<Guid> claims);
         string GenerateRefreshToken();
 
-        ClaimsPrincipal GetClaimsPrincipal(string token);
+        ClaimsPrincipal? GetClaimsPrincipal(string? token);
+
+        ClaimsUserDTO<TKey>? GetClaimsUserDTO<TKey>(ClaimsPrincipal claims);
 
         DateTimeOffset AccessTokenExpirationDate();
         DateTimeOffset RefreshTokenExpirationDate();

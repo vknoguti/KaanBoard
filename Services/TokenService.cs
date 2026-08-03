@@ -1,5 +1,6 @@
 ﻿using KaanBoard.DTOs;
 using KaanBoard.Enums;
+using KaanBoard.Extensions;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -74,8 +75,13 @@ namespace KaanBoard.Services
             return refreshToken;
         }
 
-        public ClaimsPrincipal GetClaimsPrincipal(string token)
+        public ClaimsPrincipal? GetClaimsPrincipal(string? token)
         {
+            if (string.IsNullOrEmpty(token))
+            {
+                return default;
+            }
+
             var tokenHandler = new JwtSecurityTokenHandler();
 
             var tokenValidationParameters = new TokenValidationParameters
@@ -98,6 +104,19 @@ namespace KaanBoard.Services
                 throw new SecurityTokenException("Invalid Token");
             }
             return principal;
+        }
+
+        public ClaimsUserDTO<TKey>? GetClaimsUserDTO<TKey>(ClaimsPrincipal claims) 
+        {
+            var idUser = claims.FindFirstValue(nameof(ClaimsUserDTO<TKey>.IdUser)).ConvertTo<TKey>();
+            var userName = claims.FindFirstValue(nameof(ClaimsUserDTO<TKey>.UserName));
+            if (idUser is null || userName is null) return null;
+
+            return new ClaimsUserDTO<TKey>
+            {
+                IdUser = idUser,
+                UserName = userName
+            };
         }
 
         public DateTimeOffset RefreshTokenExpirationDate()
